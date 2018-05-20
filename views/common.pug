@@ -16,6 +16,8 @@ mixin storyItem(data)
   .comment-item(id="item-"+data.id)
     .header
       | #{data.title} | #{data.by}
+    .body
+      | !{data.text}
 
 mixin storyItemLink(data)
   .comment-item
