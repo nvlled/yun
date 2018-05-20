@@ -15,8 +15,10 @@ app.get("/", async (req, res) => {
 
 app.get("/s/:id", async (req, res) => {
     let id = req.params.id;
+    let items = await lib.getThread(id);
     res.render("thread", {
-        items: await lib.getThread(id),
+        title: (items[0] || {}).title,
+        items,
     });
 });
 

@@ -2,7 +2,13 @@
 
 html
   head
-    title ${siteTitle} "Yun -- shitty HN frontend"
+    if title
+      title= title
+    else
+      title "Yun -- shitty HN frontend"
+
     link(rel="stylesheet", href="/static/css/site.css")
   body
+    div.main-nav
+      a(href="/") home
     block content
