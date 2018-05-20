@@ -1,0 +1,13 @@
+
+
+
+extends site.pug
+
+block content
+  include common.pug
+
+  #changed
+    each data in items
+      +storyItemLink(data)
+    div
+      a(href="?page="+(page+1)) more

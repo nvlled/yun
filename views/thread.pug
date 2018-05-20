@@ -1,0 +1,10 @@
+
+
+extends site.pug
+
+block content
+  include common.pug
+
+  #thread
+    each data in items
+      +item(data)

@@ -1,0 +1,34 @@
+
+
+mixin commentItem(data)
+  .comment-item(id="item-"+data.id)
+    .header
+      | #{data.by}
+      span= "#"+data.id
+      | #{" -> "}
+      small: a(href="#item-"+data.parent)
+        | #{data.parent}
+    .body
+      | !{data.text}
+
+
+mixin storyItem(data)
+  .comment-item(id="item-"+data.id)
+    .header
+      | #{data.title} | #{data.by}
+
+mixin storyItemLink(data)
+  .comment-item
+    .header
+      a(href="/s/"+data.id)
+        | #{data.title}
+
+mixin item(data)
+  if data.type == "story"
+    +storyItem(data)
+  else if data.type == "comment"
+    +commentItem(data)
+  else
+    .unknown-item
+      span unknown item
+      span= (data || "").toString()

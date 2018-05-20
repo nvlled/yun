@@ -1,0 +1,12 @@
+
+
+body {
+    font-size: 30px;
+}
+
+.comment-item {
+    border-left: 15px solid rgba(50, 150, 50, 0.5);
+    border-bottom: 1px solid gray;
+    padding: 5px;
+    margin-bottom: 25px;
+}
