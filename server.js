@@ -6,7 +6,7 @@ let app = express();
 
 app.set("view engine", "pug");
 app.get("/", async (req, res) => {
-    let page = req.query.page || 0;
+    let page = parseInt(req.query.page) || 0;
     res.render("home", {
         items: await lib.topStories(page),
         page,
