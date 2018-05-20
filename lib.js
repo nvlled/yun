@@ -32,6 +32,7 @@ let dump = obj => console.dir(obj, {depth: null});
 
 const cacheDir = __dirname+"/_cache";
 const defaultPageSize = 15;
+const enableCache = false;
 
 let M = {
     url,
@@ -86,6 +87,8 @@ let M = {
     },
 
     async _getCachedItem(id) {
+        if (!enableCache)
+            return null;
         try {
             let jsonStr = await fs.readFileAsync (`${cacheDir}/item/${id}.json`);
             console.log("** found cached for", id);
