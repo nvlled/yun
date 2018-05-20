@@ -5,10 +5,12 @@ html
     if title
       title= title
     else
-      title "Yun -- shitty HN frontend"
+      title Yun -- shitty HN frontend
 
     link(rel="stylesheet", href="/static/css/site.css")
   body
     div.main-nav
-      a(href="/") home
+      a.bracket(href="/") home
+      span #{" "}
+      small: a.bracket(href="https://github.com/nvlled/yun") code
     block content

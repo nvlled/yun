@@ -10,3 +10,6 @@ body {
     padding: 5px;
     margin-bottom: 25px;
 }
+
+.bracket::before { content: "[" }
+.bracket::after  { content: "]" }

@@ -32,7 +32,7 @@ let dump = obj => console.dir(obj, {depth: null});
 
 const cacheDir = __dirname+"/_cache";
 const defaultPageSize = 15;
-const enableCache = false;
+const enableCache = true;
 
 let M = {
     url,
