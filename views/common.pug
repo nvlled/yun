@@ -2,28 +2,51 @@
 
 mixin commentItem(data)
   .comment-item(id="item-"+data.id)
+    input(type="hidden", name="item-id", value=data.id)
+    input(type="hidden", name="parent-id", value=data.parent)
     .header
       | #{data.by}
-      span= "#"+data.id
-      | #{" -> "}
-      small: a(href="#item-"+data.parent)
-        | #{data.parent}
+      | 
+      a.ref(href="#item-"+data.id)
+        | ##{data.id}
     .body
-      | !{data.text}
+      br
+      a.ref(href="#item-"+data.parent)
+        small >>#{data.parent}
+      br
+      if (data.text)
+        | !{data.text}
+      else
+        small: em (no text)
+    .footer
+      .refs
 
 
 mixin storyItem(data)
   .comment-item(id="item-"+data.id)
+    input(type="hidden", name="item-id", value=data.id)
+    input(type="hidden", name="parent-id", value="")
     .header
-      | #{data.title} | #{data.by}
+      a(href=data.url)
+        | #{data.title} 
+      | by #{data.by}
+      br
+      a(href=data.url)
+        | #{data.url} 
     .body
+      br
       | !{data.text}
+    .footer
+      .refs
 
 mixin storyItemLink(data)
-  .comment-item
+  .story-item-link
     .header
       a(href="/s/"+data.id)
         | #{data.title}
+    .body
+        | #{data.descendants} comments |
+        | #{moment(data.time*1000).fromNow()}
 
 mixin item(data)
   if data.type == "story"

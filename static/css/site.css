@@ -1,14 +1,70 @@
 
 
 body {
-    font-size: 30px;
+    color: #122;
+    background-color: #fefefa;
+    font-size: 200%;
 }
 
-.comment-item {
-    border-left: 15px solid rgba(50, 150, 120, 0.7);
+a {
+    text-decoration: none;
+    color: #233;
+}
+
+.more {
+    text-align: center;
+    height: 100px;
+}
+.more a {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: orange;
+    color: white;
+}
+
+.orange { color: orange; }
+.center { text-align: center; }
+.right { text-align: right; }
+
+header.site {
+    height: 150px;
+}
+
+.story-item-link {
+    border-left: 10px solid rgba(150, 110, 60, 0.7);
     border-bottom: 1px solid gray;
     padding: 5px;
     margin-bottom: 25px;
+    overflow-x: auto;
+}
+
+.story-item-link a {
+    text-decoration: none;
+}
+
+.comment-item {
+    border-left: 10px solid rgba(150, 110, 60, 0.7);
+    border-bottom: 1px solid gray;
+    padding: 5px;
+    margin-bottom: 25px;
+    overflow-x: auto;
+}
+
+.comment-item .refs {
+    overflow: wrap;
+}
+
+.comment-item .refs a {
+    padding-right: 10px;
+    font-size: 20px;
+    display: inline-block;
+}
+
+.comment-item .header a.ref {
+}
+
+.comment-item.sel {
+    border-left: 10px solid rgba(150, 60, 60, 0.7);
 }
 
 .bracket::before { content: "[" }

@@ -1,10 +1,18 @@
 
+require("dotenv").config();
+let proc = require("process");
+
+const moment = require("moment");
+const cheerio = require("cheerio");
+const Database = require("better-sqlite3");
 
 //const {join: joinPath} = require("path");
 const baseURL = "https://hacker-news.firebaseio.com/v0";
-const request = require("request-promise");
 Promise = require("bluebird");
 const fs = Promise.promisifyAll(require("fs"));
+const request = require("request-promise").defaults({
+    jar: true,
+});
 
 let mkdir = async dir => {
     try {
@@ -27,6 +35,7 @@ let parseJSON = str => {
         return null;
     };
 }
+
 let hopeless = (promiseArray) => Promise.all(promiseArray);
 let dump = obj => console.dir(obj, {depth: null});
 
@@ -37,10 +46,97 @@ const enableCache = true;
 let M = {
     url,
 
+    database: {
+        filename: __dirname + "/yun.db3",
+        init() {
+            let db = this.create();
+            db.exec(`
+                create table if not exists updated_items(
+                    id varchar(15) primary key,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+        },
+        create() {
+            return new Database(this.filename);
+        },
+        prepare(sql) {
+            let db = this.create();
+            return db.prepare(sql);
+        },
+    },
+
+    async tryLogin() {
+        if (await M.isLoggedIn())
+            return;
+        return await M.hnLogin();
+    },
+
+    async hnLogin() {
+        try {
+            let resp = await request({
+                method: "POST",
+                uri: "https://news.ycombinator.com/login",
+                form: {
+                    acct: proc.env.HNUSER,
+                    pw: proc.env.HNPASS,
+                },
+            });
+            return true;
+        } catch(e) {
+            if (Math.floor(e.statusCode / 100) != 3) {
+                console.log("failed to login:", e.message);
+                return false;
+            }
+            return true;
+        }
+    },
+
+    async isLoggedIn() {
+        let resp = await request({
+            method: "GET",
+            uri: "https://news.ycombinator.com/user?id="+proc.env.HNUSER,
+        });
+        let $ = cheerio.load(resp);
+        return $("form.profileform").find("input[value=update]").length > 0;
+    },
+
+    async comment(parent, text) {
+        let resp = await request({
+            method: "GET",
+            uri: "https://news.ycombinator.com/item?id="+parent,
+        });
+        let $ = cheerio.load(resp);
+        let $form = $("form[action=comment]");
+
+        let gotoURL = $form.find("input[name=goto]").val();
+        let hmac = $form.find("input[name=hmac]").val();
+        console.log("hmac", );
+
+        resp = await request({
+            method: "POST",
+            uri: "https://news.ycombinator.com/comment",
+            form: {
+                parent,
+                text,
+                hmac,
+                ["goto"]: gotoURL,
+            },
+        });
+        console.log(resp);
+    },
+
+    async profile() {
+        let resp = await request({
+            method: "GET",
+            uri: "https://news.ycombinator.com/user?id=sudon",
+        });
+        console.log("profile", resp);
+    },
+
     job: {
         intervalId: null,
-
-        lastItemIds: {},
+        sleepSeconds: 60,
 
         start() {
             this.running = true;
@@ -48,34 +144,15 @@ let M = {
                 let resp = await request.get(url("updates"));
                 let {items: itemIds, profiles} = parseJSON(resp) || {};
 
-                let changed = false;
-                for (let id of itemIds) {
-                    if (!this.lastItemIds[id]) {
-                        changed = true;
-                        break;
-                    }
-                }
-                if ( ! changed) {
-                    if (this.running)
-                        this.intervalId = setTimeout(loop, 60*1000);
-                    return;
-                }
-
                 console.log("batch job start", itemIds);
 
-                this.lastItemIds = {};
-                let ps = []
-                for (let id of itemIds) {
-                    console.log("updating", id);
-                    ps.push(M.getItem(id, 0, 0, false));
-                    if (!this.running)
-                        break;
-                    this.lastItemIds[id] = true;
-                }
-                await Promise.all(ps);
+                M._setUpdated(...itemIds);
+                M._removedExpiredUpdates();
+                // TODO: delete rows that are a day old
+
                 console.log("batch job end");
                 if (this.running)
-                    this.intervalId = setTimeout(loop, 60*1000);
+                    this.intervalId = setTimeout(loop, this.sleepSeconds*1000);
             }
             this.intervalId = setTimeout(loop);
         },
@@ -97,6 +174,14 @@ let M = {
         return null;
     },
 
+    async _removeCache(item) {
+        try {
+            console.log("** deleting cache", item.id);
+            await fs.unlinkAsync(`${cacheDir}/item/${item.id}.json`);
+        } catch(e) { /*console.log(e);*/ }
+        return null;
+    },
+
     async _cacheItem(item) {
         try {
             let jsonData = JSON.stringify(item);
@@ -106,12 +191,47 @@ let M = {
         return null;
     },
 
+    _isUpdated(id) {
+        let st = M.database.prepare("select * from updated_items where id=@id");
+        let updated = !! st.get({id});
+        return updated
+    },
+    _setUpdated(...ids) {
+        let st = M.database.prepare("insert or ignore into updated_items(id) values(@id)");
+        for (let id of ids)
+            st.run({id: id.toString()});
+    },
+    _clearUpdated(id) {
+        let st = M.database.prepare("delete from updated_items where id=@id");
+        st.run({id});
+    },
+    _removedExpiredUpdates(id) {
+        let del = M.database.prepare("insert or ignore into updated_items(id) values(@id)");
+        let st = M.database.prepare("select * from updated_items");
+        let hoursExpire = 12;
+        let n = 256;
+        let rows = [];
+        for (let row of st.iterate()) {
+            rows.push(row);
+            if (n-- <= 0)
+                break;
+        }
+        for (let row of rows) {
+            if (moment().diff(moment(row.timestamp), "hours") >= hoursExpire) {
+                console.log("expired", row.id);
+                del.run({id: row.id});
+                M._removeCache(row);
+            }
+        }
+    },
+
     async getItem(id, adopt=0, level=0, fetchCache=false) {
         let item = await M._getCachedItem(id);
-        if (!item || fetchCache) {
+        if (!item || fetchCache || M._isUpdated(id)) {
             let resp = await request.get(url("item", id));
             item = JSON.parse(resp);
             M._cacheItem(item);
+            M._clearUpdated(id);
         }
 
         item.kids = item.kids || [];
@@ -192,6 +312,7 @@ let M = {
     async init() {
         mkdir(cacheDir);
         mkdir(`${cacheDir}/item`);
+        M.database.init();
     },
 }
 

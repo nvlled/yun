@@ -5,12 +5,21 @@ html
     if title
       title= title
     else
-      title Yun -- shitty HN frontend
+      title 
+        | Yun -- shitty HN frontend
 
     link(rel="stylesheet", href="/static/css/site.css")
   body
-    div.main-nav
-      a.bracket(href="/") home
-      span #{" "}
-      small: a.bracket(href="https://github.com/nvlled/yun") code
+    header.site
+      h1.center
+        a(href="/") Yun 
+        | - 
+        a.orange(href="https://news.ycombinator.com") HN 
+        a(href="/") Reader
+      div.main-nav.right
+        a.bracket(href="/") home
+        span #{" "}
+        small: a.bracket(href="https://github.com/nvlled/yun") code
+        small: a.bracket(href="#") #{hnuser}
+    br
     block content
