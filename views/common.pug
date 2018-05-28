@@ -3,16 +3,23 @@
 mixin commentItem(data)
   .comment-item(id="item-"+data.id)
     input(type="hidden", name="item-id", value=data.id)
+    input(type="hidden", name="item-by", value=data.by)
     input(type="hidden", name="parent-id", value=data.parent)
+    input(type="hidden", name="parent-by", value=data.parent)
     .header
       | #{data.by}
       | 
       a.ref(href="#item-"+data.id)
         | ##{data.id}
     .body
-      br
       a.ref(href="#item-"+data.parent)
-        small >>#{data.parent}
+        if data.parent == data.op
+          small >>(OP)
+        else
+          small >>#{data.parentBy}
+          small.preview
+            | :
+            | #{data.parentText}
       br
       if (data.text)
         | !{data.text}

@@ -5,6 +5,7 @@ let proc = require("process");
 const moment = require("moment");
 const cheerio = require("cheerio");
 const Database = require("better-sqlite3");
+const striptags = require("striptags");
 
 //const {join: joinPath} = require("path");
 const baseURL = "https://hacker-news.firebaseio.com/v0";
@@ -34,6 +35,17 @@ let parseJSON = str => {
     } catch (e) {
         return null;
     };
+}
+
+let truncate = (str, len=100) => {
+    if (!str)
+        return "";
+    if (str.length < len)
+        return str;
+    return str.slice(0, len-3) + "...";
+}
+let stripHtml = html => {
+    return striptags(html).replace(/&.+?;/g, "");
 }
 
 let hopeless = (promiseArray) => Promise.all(promiseArray);
@@ -135,11 +147,12 @@ let M = {
     },
 
     job: {
-        intervalId: null,
+        timerId: null,
         sleepSeconds: 60,
 
         start() {
             this.running = true;
+            let sleepMs = this.sleepSeconds;
             let loop = async () => {
                 let resp = await request.get(url("updates"));
                 let {items: itemIds, profiles} = parseJSON(resp) || {};
@@ -152,14 +165,14 @@ let M = {
 
                 console.log("batch job end");
                 if (this.running)
-                    this.intervalId = setTimeout(loop, this.sleepSeconds*1000);
+                    this.timerId = setTimeout(loop, sleepMs*1000);
             }
-            this.intervalId = setTimeout(loop);
+            this.timerId = setTimeout(loop);
         },
 
         stop() {
             this.running = false;
-            clearTimeout(this.intervalId);
+            clearTimeout(this.timerId);
         },
     },
 
@@ -183,9 +196,10 @@ let M = {
     },
 
     async _cacheItem(item) {
+        if (!item)
+            return;
         try {
             let jsonData = JSON.stringify(item);
-            console.log("** caching", item.id);
             await fs.writeFileAsync(`${cacheDir}/item/${item.id}.json`, jsonData);
         } catch(e) { console.log(e); }
         return null;
@@ -230,9 +244,11 @@ let M = {
         if (!item || fetchCache || M._isUpdated(id)) {
             let resp = await request.get(url("item", id));
             item = JSON.parse(resp);
-            M._cacheItem(item);
+            await M._cacheItem(item);
             M._clearUpdated(id);
         }
+        if (!item)
+            return {};
 
         item.kids = item.kids || [];
         item.level = level;
@@ -246,7 +262,7 @@ let M = {
 
     async getThread(id) {
         let queue = [id];
-        let items = [];
+        let items = {};
         let batchSize = 150;
         while(queue.length > 0) {
             let batch = queue.splice(0, batchSize);
@@ -255,10 +271,16 @@ let M = {
             );
             for (let item of newItems) {
                 queue = queue.concat(item.kids || []);
-                items.push(item);
+                let parent = items[item.parent];
+                if (parent) {
+                    item.parentBy = parent.by;
+                    item.parentText = stripHtml(truncate(parent.text));
+                }
+                item.op = id;
+                items[item.id] = item;
             }
         }
-        return items;
+        return Object.values(items);
     },
 
     async getUser(username) {

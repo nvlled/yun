@@ -39,10 +39,17 @@ function load() {
         var refNode = parent.querySelector(".refs");
         var a = document.createElement("a");
         a.href = "#item-" + itemId;
-        a.textContent = ">>"+itemId;
+        a.textContent = ">>"+itemBy(itemId);
         a.classList.add("ref");
         a.onclick = highlightItem(itemId);
         refNode.appendChild(a);
+    }
+
+    function itemBy(id) {
+        var node = items[id];
+        if (!node)
+            return id;
+        return node.querySelector("input[name=item-by]").value;
     }
 
     var lastRef = null;
