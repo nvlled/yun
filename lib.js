@@ -241,7 +241,7 @@ let M = {
 
     async getItem(id, adopt=0, level=0, fetchCache=false) {
         let item = await M._getCachedItem(id);
-        if (!item || fetchCache || M._isUpdated(id)) {
+        if (!item || fetchCache || M._isUpdated(id) || item.type == "story") {
             let resp = await request.get(url("item", id));
             item = JSON.parse(resp);
             await M._cacheItem(item);

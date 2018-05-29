@@ -55,6 +55,9 @@ header.site {
 .comment-item .body .preview {
     color: gray;
 }
+.comment-item .header .date {
+    font-size: 18px;
+}
 
 .comment-item .refs {
     overflow: wrap;
@@ -75,3 +78,4 @@ header.site {
 
 .bracket::before { content: "[" }
 .bracket::after  { content: "]" }
+

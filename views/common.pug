@@ -11,6 +11,8 @@ mixin commentItem(data)
       | 
       a.ref(href="#item-"+data.id)
         | ##{data.id}
+      span  | #{moment(data.time*1000).fromNow()}
+      small.date  [#{moment(data.time*1000).format()}]
     .body
       a.ref(href="#item-"+data.parent)
         if data.parent == data.op
