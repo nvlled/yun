@@ -51,7 +51,7 @@ let stripHtml = html => {
 let hopeless = (promiseArray) => Promise.all(promiseArray);
 let dump = obj => console.dir(obj, {depth: null});
 
-const cacheDir = __dirname+"/_cache";
+const cacheDir = (proc.env.TMP_DIR || __dirname) +"/_cache";
 const defaultPageSize = 15;
 const enableCache = true;
 
@@ -59,7 +59,7 @@ let M = {
     url,
 
     database: {
-        filename: __dirname + "/yun.db3",
+        filename: (proc.env.TMP_DIR || __dirname) + "/yun.db3",
         init() {
             let db = this.create();
             db.exec(`
@@ -201,7 +201,7 @@ let M = {
         try {
             let jsonData = JSON.stringify(item);
             await fs.writeFileAsync(`${cacheDir}/item/${item.id}.json`, jsonData);
-        } catch(e) { console.log(e); }
+        } catch(e) { }
         return null;
     },
 
