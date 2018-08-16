@@ -1,6 +1,6 @@
 # yun
 HN frontend
-https://yun-zwwgelgssu.now.sh/
+https://yun.now.sh
 
 ## Building and running
 1. git clone https://github.com/nvlled/yun 
