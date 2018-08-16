@@ -10,7 +10,7 @@ function load() {
         var parentId = item.querySelector("input[name=parent-id]").value;
         var refNode = item.querySelector(".refs");
 
-        refNode.textContent = "replies: ";
+        refNode.textContent = "";
 
         items[itemId] = item;
         if (parentId && items[parentId]) {
@@ -42,6 +42,9 @@ function load() {
         a.textContent = ">>"+itemBy(itemId);
         a.classList.add("ref");
         a.onclick = highlightItem(itemId);
+        if (!refNode.textContent.trim()) {
+            refNode.textContent = "replies: ";
+        }
         refNode.appendChild(a);
     }
 
